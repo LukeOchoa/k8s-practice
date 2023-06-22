@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ckad-httpd-fzkkvrwgms
+spec:
+  containers:
+
+  - name: nginx-custom-environment
+    image: nginx:1.17
+    env:
+      - name: EXAM
+        value: CKAD

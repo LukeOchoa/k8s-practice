@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: red-pv-ckad03-str
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 100Mi
+  hostPath:
+    path: /opt/red-pv-ckad03-str
+  claimRef:
+    name: red-pv-ckad03-str

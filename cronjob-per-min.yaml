@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+
+metadata:
+  name: learning-every-minute
+  namespace: ckad-job
+
+spec:
+  schedule: "* * * * *"
+
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: learning-every-minute
+            image: busybox:1.28
+            command:
+            - /bin/sh
+            - -c
+            - echo I am practicing from CKAD certification
+          restartPolicy: OnFailure

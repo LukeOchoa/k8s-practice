@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dos-containers-pod
+spec:
+  containers:
+  # One
+  - name: alpha
+    image: nginx:1.17
+    env:
+    - name: ROLE
+      value: SERVER
+
+  # Two
+  - name: beta
+    image: busybox:1.28
+    command: ['sh', '-c', 'echo "Hello multi-containers"']
+  
+
+#  kubectl run dos-containers-pod -n ckad-multi-containers --image=nginx:1.17 --env ROLE=SERVER --dry-run=client -o yaml > file_name.yaml
+
+
+
+
+# command: ['sh', '-c', 'echo "" && sleep 3600']

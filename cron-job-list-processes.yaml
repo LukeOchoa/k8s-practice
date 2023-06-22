@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+
+metadata:
+  name: simple-python-job
+
+spec:
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: simple-python-job
+            image: python
+            command:
+            - /bin/sh
+            - -c
+            - ps -eaf
+          restartPolicy: OnFailure

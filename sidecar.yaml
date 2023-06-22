@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: ckad-multi-containers
+  name: ckad-sidecar-pod
+spec:
+  containers:
+
+    # CONTAINER 1; MAIN-CONTAINER
+    - image: nginx:1.16
+      name: main-container
+      resources: {}
+      ports:
+        - containerPort: 80
+
+      # Write Data FROM this location
+      volumeMounts:
+        - name: my-vol
+          mountPath: /usr/share/nginx/html
+
+
+    # CONTAINER 2; SIDECAR-CONTAINER
+    - image: busybox:1.28
+      name: sidecar-container
+      command:
+        - /bin/sh
+        - -c
+        - while true; do echo $(date -u) Hi I am from Sidecar container >> /var/log/index.html; sleep 5;done
+      resources: {}
+
+      # Write Data FROM this location
+      volumeMounts:
+        - name: my-vol
+          mountPath: /var/log
+
+
+  
+  dnsPolicy: Default
+
+  # DATA is written to THIS location
+  volumes:
+    - name: my-vol
+      emptyDir: {}
+
+

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: healthy-server
+spec:
+  containers:
+  # One
+  - name: main
+    image: busybox:1.28
+    env:
+    - name: ROLE
+      value: SERVER
+
+  # Two
+  - name: init
+    image: busybox:1.28
+    #command: ['sh', '-c', 'echo "Hello multi-containers"']
+    command: 
+      - sh # ['sh', '-c', 'echo "Hello multi-containers"']
+      - -c 
+      - echo 

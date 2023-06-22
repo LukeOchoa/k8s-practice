@@ -1,0 +1,68 @@
+Random Notes for k8s
+
+# this could be used to get the logs from a cronjob maybe
+kubectl exec -n ckad-multi-containers ckad-sidecar-pod --container main-container -- cat /usr/share/nginx/html/index.html
+
+
+
+
+
+# X: {
+	SECTION: APPLICATION DESIGN AND BUILD
+	
+	
+	For this question, please set the context to cluster1 by running:
+	
+	kubectl config use-context cluster1
+	
+	
+	
+	In the ckad-multi-containers namespaces, create a ckad-sidecar-pod pod that matches the following requirements.
+	
+	
+	Pod has an emptyDir volume named my-vol.
+	
+	
+	The first container named main-container, runs nginx:1.16 image. This container mounts the my-vol volume at /usr/share/nginx/html path.
+	
+	
+	The second container named sidecar-container, runs busybox:1.28 image. This container mounts the my-vol volume at /var/log path.
+	
+	Every 5 seconds, this container should write the current date along with greeting message Hi I am from Sidecar container to index.html in the my-vol volume.
+}
+
+
+
+answer: {
+	apiVersion: v1
+	kind: Pod
+	metadata:
+	  namespace: ckad-multi-containers
+	  name: ckad-sidecar-pod
+	spec:
+	  containers:
+	    - image: nginx:1.16
+	      name: main-container
+	      resources: {}
+	      ports:
+	        - containerPort: 80
+	      volumeMounts:
+	        - name: my-vol
+	          mountPath: /usr/share/nginx/html
+	    - image: busybox:1.28
+	      command:
+	        - /bin/sh
+	        - -c
+	        - while true; do echo $(date -u) Hi I am from Sidecar container >> /var/log/index.html; sleep 5;done
+	      name: sidecar-container
+	      resources: {}
+	      volumeMounts:
+	        - name: my-vol
+	          mountPath: /var/log
+	  dnsPolicy: Default
+
+	  # Location to write to
+	  volumes:
+	    - name: my-vol
+	      emptyDir: {}
+}
