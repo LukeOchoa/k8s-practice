@@ -81,23 +81,31 @@ kubectl create service nodeport route-apd-svc --tcp=8080:8080 --dry-run=client -
 ---
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
   labels:
     type-one: blue
   name: blue-apd
+
 spec:
+
   replicas: 7
+
   selector:
     matchLabels:
       type-one: blue
       version: v1
+
   template:
+
     metadata:
       labels:
         version: v1
         type-one: blue
+
     spec:
       containers:
+
         - image: kodekloud/webapp-color:v1
           name: blue-apd
 
@@ -134,6 +142,94 @@ spec:
 
 
 route-apd-svc service should look like this: -
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 apiVersion: v1

@@ -1,12 +1,32 @@
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
+
+
+
+
+apiVersion: V1
+kind: Pod
 metadata:
-  name: banana-sc-ckad08-str
+  name: ckad-flash89-aom
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      volumeMounts:
+        - name: flash-logs
+          mountPath: /var/log
+    - name: busybox
+      image: busybox
+      command:
+        - bin/sh
+        - -c
+        - sleep 10000
+      volumeMounts:
+        - name: flash-logs
+          mountPath: /usr/src
+  volumes:
+    - name: flash-logs
+      emptyDir: {}  
 
-provisioner: kubernetes.io/no-provisioner
 
-allowVolumeExpansion: true
 
-volumeBindingMode: WaitForFirstConsumer
 
-#reclaimPolicy: Retain
+    

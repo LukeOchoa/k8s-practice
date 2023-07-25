@@ -5,9 +5,14 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
+
   capacity:
     storage: 100Mi
+
   hostPath:
     path: /opt/red-pv-ckad03-str
+
   claimRef:
     name: red-pv-ckad03-str
+
+  storageClassName: AnyName

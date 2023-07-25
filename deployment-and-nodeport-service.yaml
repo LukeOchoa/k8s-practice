@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: green-apd
+  labels:
+    type-two: green
+
+spec:
+
+  replicas: 3
+
+  selector:
+    matchLabels:
+      type-two: green
+      version: v1
+
+  template:
+
+    metadata:
+      labels:
+        type-two: green
+        version: v1
+
+    spec:
+      containers:
+
+        - name: green
+          image: kodekloud/webapp-color:v1
+          command: ["sh", "-c", "sleep 5000;"]
+
+      restartPolicy: Always
+
+# apiVersion: apps/v1
+# kind: Deployment
+
+# metadata:
+#   name: blud-apd
+#   labels:  
+#     type-one: blue
+
+# spec:
+
+#   replicas: 7
+  
+#   selector:
+#     matchLabels:
+#       type-one: blue
+#       version: v1
+
+#   template:
+
+#     metadata:
+#       labels:
+#         type-one: blue
+#         version: v1
+
+#     spec:
+#       containers:
+#         - name: blue
+#           image: kodekloud/webapp-color:v1
+#           command: ["sh", "-c", "sleep 5000;"]
+
+#       restartPolicy: Always
+            
+
+# apiVersion: v1
+# kind: Service
+
+# metadata:
+#   name: route-apd-svc
+#   label:
+#     app: route-apd-svc
+
+# spec:
+
+#   type: NodePort
+
+#   selector:
+#     version: v1
+
+#   ports:
+#     - port: 80
+#       targetPort: 8080
+#       nodePort: 30080
