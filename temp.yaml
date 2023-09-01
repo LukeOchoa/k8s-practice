@@ -1,32 +1,30 @@
-
-
-
-
-apiVersion: V1
+apiVersion: v1
 kind: Pod
 metadata:
-  name: ckad-flash89-aom
+  name: ckad-sidecar-pod
+  namespace: ckad-multi-containers
+
 spec:
   containers:
-    - name: nginx
-      image: nginx
+
+    - name: main-container
+      image: busybox:1.28
       volumeMounts:
-        - name: flash-logs
-          mountPath: /var/log
-    - name: busybox
-      image: busybox
+        - name: my-vol
+          mountPath: /usr/share/nginx/html
+
+    - name: sidecar-conatiner
+      image:  busybox:1.28
       command:
-        - bin/sh
+        - /bin/sh
         - -c
-        - sleep 10000
+        - while true; do echo $(date -u) Hi I am from Sidecar container >> /var/log/index.html; sleep 5;done
       volumeMounts:
-        - name: flash-logs
-          mountPath: /usr/src
+        - name: my-vol
+          mountPath: /var/log
+
   volumes:
-    - name: flash-logs
-      emptyDir: {}  
+    - name: my-vol
+      emptyDir: {}
 
-
-
-
-    
+# Done is important
