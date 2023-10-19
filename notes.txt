@@ -112,7 +112,9 @@ helm thingy: {
 	(
 		Is Helm repository created?
 		Is Helm chart installed?
-		Are resources deployed on ns?
+		(
+			Are resources deployed on ns?
+		)
 	)
 
 	
@@ -247,7 +249,7 @@ helm thingy: {
 {
 	WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /root/.kube/config
 WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /root/.kube/config
-NAME (release-name)     NAMESPACE               REVISION        UPDATED                                     STATUS          CHART                           APP VERSION
+NAME (release-name !!!)     NAMESPACE               REVISION        UPDATED                                     STATUS          CHART                           APP VERSION
 atlanta-page-apd        atlanta-page-04         1               2023-07-12 10:18:51.122388204 +0000 UTC     deployed        atlanta-page-apd-0.1.0          1.16.0     
 digi-locker-apd         digi-locker-02          1               2023-07-12 10:18:48.244000366 +0000 UTC     deployed        digi-locker-apd-0.1.0           1.16.0     
 security-alpha-apd      security-alpha-01       1               2023-07-12 10:18:46.773087487 +0000 UTC     deployed        security-alpha-apd-0.1.0        1.16.0     
@@ -308,6 +310,7 @@ kubectl get deploy -n security-alpha-01 security-alpha-apd  -o json | jq -r '.sp
     After finding the kodekloud/click-counter:latest image, use the helm uninstall to remove the deployed chart that are using this vulnerable image.
 
     helm uninstall <RELEASE-NAME> -n <NAMESPACE> 
+
 }
 
 
@@ -386,7 +389,7 @@ The above command will delete the existing deployment and create a new one with 
 
 
 
-{ : Broken :
+{ 
 
 
     For this question, please set the context to cluster3 by running:
@@ -450,6 +453,13 @@ The above command will delete the existing deployment and create a new one with 
 
         Upgrade the helm chart to above 13.2.9 and also, increase the replica count of the deployment to 2 from the command line. Use the helm upgrade command as follows: -
 
+	(
+		helm upgrade [RELEASE] [CHART] [flags]
+		(
+			where [CHART] is release name & image name? == release-name/image-name?
+		)
+	)
+
     helm upgrade lvm-crystal-apd lvm-crystal-apd/nginx -n crystal-apd-ns --version=13.2.12 --set replicaCount=2
 
 
@@ -473,11 +483,20 @@ The above command will delete the existing deployment and create a new one with 
 	
 }
 
-
+csidrivers                    
+csinodes                      
+csistoragecapacities          
+storageclasses                
+volumeattachments
 
 { : Update with Kubectl : 
 		(
 			[kubectl] [set] [image] [-n] [type the namespace here] [deploy(short for deployments.apps)] [deployment name (use k get {-n some-namespace-goes-here} deployment.apps) (and maybe add the namespace)] [container name goes here]=[container-image-version-with-a-tag (: is the tag with fun decimal numbers after it)]
+			k set image -n default deploy ocean-apd ocean-apd=kodekloud/webapp-color:v2
+			metadata:
+				labels:
+						v: v1
+						
 		)
 
 	Run the following command to change the context: -
@@ -506,7 +525,7 @@ The output of the kubectl describe command will provide you with a detailed desc
     In the previous command, we can see the container and image name under the Pod Template spec. Use the kubectl set command to update the image of that container as follows:
 
 kubectl set image -n dashboard-apd deploy results-apd results-apd-container=nginx:1.23.3
-
+k set image -n <namespace> deploy <deployment name> <Container-Name=ImageName:ImageVersion>
 
 After running the above command, Kubernetes will automatically update the results-apd-container container with the new image, and create a new replica of the resource with the updated image.
 The old replica will be deleted once the new one is up and running.
@@ -933,6 +952,27 @@ Login to dashboard using the above token. you should see only pods and namespace
     NAME       AGE
     my-anime   23s
 
+	(
+		Use "k get crd" to see all the crds available
+
+		Use "k get crd <name of crd> -o yaml" to see the yaml layout
+
+		(apiVersion)
+		For the apiVersion when you write your own "Custom Resource" as yaml, use the "group" yaml field
+			under the "spec" field of the crd(in yaml form) to get your "apiVersion" first half
+
+			the second half (for after the slash: my.custom.resourcd.d/the-second-half)
+			use the "name" field after the "group" field(that you got the first half from)
+
+		(kind)
+		For the "kind" field, use the "kind" field under the "spec" -> "names" fields in the crd yaml file
+
+		(spec fields)
+		For the spec fields, use the things under "spec" -> "versions" -> ... -> "properties" for your spec fields if you need any of them
+		
+		
+	)
+
 
 	
 }
@@ -1149,6 +1189,35 @@ Login to dashboard using the above token. you should see only pods and namespace
     kubectl expose pod pod22-ckad-svcn --name=svc22-ckad-svcn --port=6335
 
     It will create a service with name svc22-ckad-svcn and pod will be exposed at port 6335.
+
+	apiVersion: v1
+	kind: Service
+	metadata:
+	  creationTimestamp: "2023-09-24T01:09:41Z"
+	  labels:
+	    run: pod22-ckad-svcn
+	  name: svc22-ckad-svcn
+	  namespace: default
+	  resourceVersion: "20413"
+	  uid: e86b50fa-20e5-4f77-8dc2-3daf91fbbc99
+	spec:
+	  clusterIP: 10.109.197.195
+	  clusterIPs:
+	  - 10.109.197.195
+	  internalTrafficPolicy: Cluster
+	  ipFamilies:
+	  - IPv4
+	  ipFamilyPolicy: SingleStack
+	  ports:
+	  - port: 6335
+	    protocol: TCP
+	    targetPort: 6335
+	  selector:
+	    run: pod22-ckad-svcn
+	  sessionAffinity: None
+	  type: ClusterIP
+	status:
+	  loadBalancer: {}
 }
 
 
@@ -1252,4 +1321,832 @@ Login to dashboard using the above token. you should see only pods and namespace
 
 
 
+{
 
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  labels:
+    type-one: blue
+  name: blue-apd
+
+spec:
+
+  replicas: 7
+
+  selector:
+    matchLabels:
+      type-one: blue
+      version: v1
+
+
+  template:
+
+    metadata:
+      labels:
+        version: v1
+        type-one: blue
+
+    spec:
+      containers:
+        - image: kodekloud/webapp-color:v1
+          name: blue-apd
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    type-two: green
+  name: green-apd
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      type-two: green
+      version: v1
+  template:
+    metadata:
+      labels:
+        type-two: green
+        version: v1
+    spec:
+      containers:
+        - image: kodekloud/webapp-color:v2
+          name: green-apd
+
+
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: route-apd-svc
+  name: route-apd-svc
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    version: v1
+	
+}
+
+
+
+{
+	scale down deployments
+	kubectl scale deploy -n <namespace> --replicas=0 --all 
+
+
+	
+}
+
+
+
+
+
+{
+
+
+		Run the following command to change the context: -
+	
+	kubectl config use-context cluster2
+	
+	
+	In this task, we will use the kubectl command. Here are the steps: -
+	
+	
+	    Use the kubectl get command to list all the given resources: -
+	
+	kubectl get po,deploy,sa,ns -n fusion-apd-x1df5
+	
+	
+	Here -n option stands for namespace, which is used to specify the namespace.
+	
+	The above command will list all the resources from the fusion-apd-x1df5 namespace.
+	
+	    Inspect the service account is used by the pods/deployment.
+	
+	kubectl get deploy -n fusion-apd-x1df5 robox-west-apd -oyaml
+	
+	
+	
+	The deployment is using the default service account.
+	
+	
+	    Now, use the kubectl get command to retrieves the YAML definition of a deployment named robox-west-apd and save it into a file.
+	
+	kubectl get deploy -n fusion-apd-x1df5 robox-west-apd -o yaml > <FILE-NAME>.yaml
+	
+	
+	    Open a VI editor. Make the necessary changes and save it. It should look like this: -
+	
+	apiVersion: apps/v1
+	kind: Deployment
+	metadata:
+	  labels:
+	    global-kgh: robox-west-apd
+	  name: robox-west-apd
+	  namespace: fusion-apd-x1df5
+	spec:
+	  replicas: 3
+	  selector:
+	    matchLabels:
+	      global-kgh: robox-west-apd
+	  strategy:
+	    type: Recreate
+	  template:
+	    metadata:
+	      labels:
+	        global-kgh: robox-west-apd
+	    spec:
+	      containers:
+	      - image: nginx
+	        imagePullPolicy: Always
+	        name: robox-container
+	      serviceAccountName: galaxy-apd-xb12
+	
+	
+	    Now, replace the resource with the following command:
+	
+	kubectl replace -f <FILE-NAME>.yaml --force
+	
+	
+	The above command will delete the existing deployment and create a new one with changes in the given namespace.
+
+
+
+}
+
+
+
+{
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    stage: test02
+  name: test-v2-apd
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      test-app: v1
+  template:
+    metadata:
+      labels:
+        test-app: v1
+    spec:
+      containers:
+      - image: kodekloud/webapp-color:v2
+        name: test-v2
+
+
+
+
+
+
+
+
+(
+	    For this question, please set the context to cluster2 by running:
+
+    kubectl config use-context cluster2
+
+
+    Please fix any possible mistakes in the manifest file located at /root/ckad11-obj-aecs.yaml, which contains a sample object created from a custom resource definition.
+
+    Note: Create the object using the above manifest when done.
+
+    info_outline
+    Solution
+
+    student-node ~ ➜  kubectl config use-context cluster2
+    Switched to context "cluster2".
+
+    student-node ~ ➜  kubectl apply -f /root/ckad11-obj-aecs.yaml
+    error: error parsing /root/ckad11-obj-aecs.yaml: error converting YAML to JSON: yaml: line 7: mapping values are not allowed in this context
+
+    student-node ~ ✖ vim /root/ckad11-obj-aecs.yaml
+
+    student-node ~ ➜  cat /root/ckad11-obj-aecs.yaml
+    apiVersion: apps/v1
+    kind: MyCustomResource
+    metadata:
+      name: ckad11-my-custom-resource-aecs
+    spec:
+      name: John  #1 Fixed the indentation issue
+      age: -10
+    status:
+      phase: Invalid
+
+    student-node ~ ➜  kubectl apply -f /root/ckad11-obj-aecs.yaml
+    error: unable to recognize "/root/ckad11-obj-aecs.yaml": no matches for kind "MyCustomResource" in version "apps/v1"
+
+    student-node ~ ✖ kubectl api-resources | grep -i MyCustomResource
+    mycustomresources                 mcr          example.com/v1                         true         MyCustomResource
+
+    student-node ~ ➜  vim /root/ckad11-obj-aecs.yaml
+
+    student-node ~ ➜  cat /root/ckad11-obj-aecs.yaml
+    apiVersion: example.com/v1  #2 fixed the apiVersion used
+    kind: MyCustomResource
+    metadata:
+      name: ckad11-my-custom-resource-aecs
+    spec:
+      name: John  #1 Fixed the indentation issue
+      age: -10
+    status:
+      phase: Invalid
+
+    student-node ~ ➜  kubectl apply -f /root/ckad11-obj-aecs.yaml
+    The MyCustomResource "ckad11-my-custom-resource-aecs" is invalid: 
+    * spec.age: Invalid value: -10: spec.age in body should be greater than or equal to 5
+    * status.phase: Unsupported value: "Invalid": supported values: "Pending", "Running", "Completed"
+
+    student-node ~ ✖ vim /root/ckad11-obj-aecs.yaml
+
+    student-node ~ ➜  cat /root/ckad11-obj-aecs.yaml
+    apiVersion: example.com/v1  #2 fixed the apiVersion used
+    kind: MyCustomResource
+    metadata:
+      name: ckad11-my-custom-resource-aecs
+    spec:
+      name: John  #1 Fixed the indentation issue
+      age: 5 #3 use the valid entries
+    status:
+      phase: Running #4 use the valid entries
+
+    student-node ~ ➜  k apply -f /root/ckad11-obj-aecs.yaml
+    mycustomresource.example.com/ckad11-my-custom-resource-aecs created
+
+
+)
+
+
+(
+	    SECTION: APPLICATION ENVIRONMENT, CONFIGURATION and SECURITY
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+    Define a Kubernetes custom resource definition (CRD) for a new resource kind called Foo (plural form - foos) in the samplecontroller.k8s.io group.
+
+    This CRD should have a version of v1alpha1 with a schema that includes two properties as given below:
+
+        deploymentName (a string type) and replicas (an integer type with minimum value of 1 and maximum value of 5).
+
+
+
+    It should also include a status subresource which enables retrieving and updating the status of Foo object, including the availableReplicas property, which is an integer type.
+    The Foo resource should be namespace scoped.
+
+
+    Note: We have provided a template /root/foo-crd-aecs.yaml for your ease. There are few issues with it so please make sure to incorporate the above requirements before deploying on cluster.
+
+    info_outline
+    Solution
+
+    student-node ~ ➜  kubectl config use-context cluster3
+    Switched to context "cluster3".
+
+    student-node ~ ➜  vim foo-crd-aecs.yaml
+
+    student-node ~ ➜  cat foo-crd-aecs.yaml 
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      name: foos.samplecontroller.k8s.io
+      annotations:
+        "api-approved.kubernetes.io": "unapproved, experimental-only"
+    spec:
+      group: samplecontroller.k8s.io
+      scope: Namespaced
+      names:
+        kind: Foo
+        plural: foos
+      versions:
+        - name: v1alpha1
+          served: true
+          storage: true
+          schema:
+            # schema used for validation
+            openAPIV3Schema:
+              type: object
+              properties:
+                spec:
+                  # Spec for schema goes here !
+                  type: object
+                  properties:
+                    deploymentName:
+                      type: string
+                    replicas:
+                      type: integer
+                      minimum: 1
+                      maximum: 5
+                status:
+                  type: object
+                  properties:
+                    availableReplicas:
+                      type: integer
+          # subresources for the custom resource
+          subresources:
+            # enables the status subresource
+            status: {}
+
+    student-node ~ ➜  kubectl apply -f foo-crd-aecs.yaml
+    customresourcedefinition.apiextensions.k8s.io/foos.samplecontroller.k8s.io created
+
+
+)
+
+(
+	    SECTION: APPLICATION ENVIRONMENT, CONFIGURATION and SECURITY
+
+
+    For this question, please set the context to cluster1 by running:
+
+    kubectl config use-context cluster1
+
+
+
+    In the ckad18-rq-ns-aecs namespace, create a ResourceQuota called ckad18-rq-aecs. This ResourceQuota should have the following specifications for CPU and memory:
+
+        Requests: CPU: 50m, Memory: 100Mi
+
+        Limits: CPU: 100m, Memory: 200Mi
+
+    info_outline
+    Solution
+
+    student-node ~ ➜  kubectl config use-context cluster1
+    Switched to context "cluster1".
+
+    student-node ~ ➜  kubectl create ns ckad18-rq-ns-aecs
+    namespace/ckad18-rq-ns-aecs created
+
+    student-node ~ ➜  cat << EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: ckad18-rq-aecs
+      namespace: ckad18-rq-ns-aecs
+    spec:
+      hard:
+        requests.cpu: "50m"
+        requests.memory: 100Mi
+        limits.cpu: "100m"
+        limits.memory: 200Mi
+    EOF
+
+    resourcequota/ckad18-rq-aecs created
+
+    student-node ~ ➜  kubectl get resourcequotas -n ckad18-rq-ns-aecs 
+    NAME           AGE   REQUEST                                         LIMIT
+    mem-cpu-aecs   1m   requests.cpu: 0/50m, requests.memory: 0/100Mi   limits.cpu: 0/100m, limits.memory: 0/200Mi
+
+
+    # Validating if the resource quotas working or not !!
+    student-node ~ ➜  cat << EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: quota-mem-cpu-demo
+      namespace: ckad18-rq-ns-aecs
+    spec:
+      containers:
+      - name: quota-mem-cpu-demo-ctr
+        image: nginx
+        resources:
+          limits:
+            memory: "210Mi"
+            cpu: "200m"
+          requests:
+            memory: "100Mi"
+            cpu: "50m"
+    EOF
+
+    Error from server (Forbidden): error when creating "STDIN": pods "quota-mem-cpu-demo" is forbidden: exceeded quota: mem-cpu-aecs, requested: limits.cpu=200m,limits.memory=210Mi, used: limits.cpu=0,limits.memory=0, limited: limits.cpu=100m,limits.memory=200Mi
+
+
+)
+
+
+(
+	    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+    Create a role named pod-creater in the ckad20-auth-aecs namespace, and grant only the list, create and get permissions on pods resources.
+
+
+    Create a role binding named mock-user-binding in the same namespace, and assign the pod-creater role to a user named mock-user.
+
+    info_outline
+    Solution
+
+    student-node ~ ➜  kubectl config use-context cluster3
+    Switched to context "cluster3".
+
+    student-node ~ ➜  kubectl create ns ckad20-auth-aecs
+
+    student-node ~ ➜ kubectl create role pod-creater --namespace=ckad20-auth-aecs --verb=list,create,get --resource=pods
+    role.rbac.authorization.k8s.io/pod-creater created
+
+    student-node ~ ➜  kubectl create rolebinding mock-user-binding --namespace=ckad20-auth-aecs --role=pod-creater --user=mock-user
+    rolebinding.rbac.authorization.k8s.io/mock-user-binding created
+
+    # Now let's validate if our role and role binding is working as expected
+    student-node ~ ➜  kubectl auth can-i create pod --as mock-user
+    no
+
+    student-node ~ ✖ kubectl auth can-i create pod --as mock-user --namespace ckad20-auth-aecs
+    yes
+
+
+)
+
+(
+	    SECTION: SERVICES AND NETWORKING
+
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+
+    Create a pod with name pod21-ckad-svcn using the nginx:alpine image in the default namespace and also expose the pod using service pod21-ckad-svcn on port 80.
+
+    Note: Use the imperative command for above scenario.
+
+    info_outline
+    Solution
+
+    To use the cluster 3, switch the context using:
+
+    kubectl config use-context cluster3
+
+    As the scenario mention to create a pod along with its service with name pod21-ckad-svcn, we can use the following imperative command.
+
+    kubectl run pod21-ckad-svcn --image=nginx:alpine --expose --port=80
+
+    It will create a pod and also exposes the pod at port 80
+)
+
+(
+	    SECTION: SERVICES AND NETWORKING
+
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+
+    We have already deployed an ingress resource in the app-space namespace.
+
+
+    But for better SEO practices, you are requested to change the URLs at which the applications are made available.
+
+
+    Change the path of the video application to make it available at /stream.
+
+
+
+    Note: Check the backend services configured for the paths in the ingress resource.
+
+    info_outline
+    Solution
+
+    To change the path of the service, you need to edit the ingress
+
+    Edit the ingress using kubectl edit -n app-space ingress ingress-resource-svcn.
+    Edit the /watch to make it as /stream.
+
+    spec:
+      ingressClassName: nginx
+      rules:
+      - http:
+          paths:
+          - backend:
+              service:
+                name: wear-service
+                port:
+                  number: 8080
+            path: /wear
+            pathType: Prefix
+          - backend:
+              service:
+                name: video-service
+                port:
+                  number: 8080
+            path: /watch  #change path to /stream
+            pathType: Prefix
+    status:
+      loadBalancer:
+        ingress:
+        - ip: 10.108.22.212
+
+
+)
+
+(
+
+	    SECTION: SERVICES AND NETWORKING
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+    This scenario is categorized into two parts. Please find them below.
+
+    Part I:
+
+    We have already deployed several pods in the default namespace. Create a ClusterIP service .i.e. service-3421-svcn, which should expose the pods, namely, pod-23 and pod-21, with port set to 8080 and targetport to 80.
+
+    Part II:
+    Store the pod names and their ip addresses from all namespaces at /root/pod_ips_ckad02_svcn where the output is sorted by their IPs.
+
+    Please ensure the format as shown below:
+
+
+    POD_NAME        IP_ADDR
+    pod-1           ip-1
+    pod-3           ip-2
+    pod-2           ip-3
+    ...
+
+
+
+    info_outline
+    Solution
+
+    Switching to cluster3:
+
+
+    kubectl config use-context cluster3
+
+
+
+    The easiest way to route traffic to a specific pod is by the use of labels and selectors . List the pods along with their labels:
+
+
+    student-node ~ ➜  kubectl get pods --show-labels 
+    NAME     READY   STATUS    RESTARTS   AGE     LABELS
+    pod-12   1/1     Running   0          5m21s   env=dev,mode=standard,type=external
+    pod-34   1/1     Running   0          5m20s   env=dev,mode=standard,type=internal
+    pod-43   1/1     Running   0          5m20s   env=prod,mode=exam,type=internal
+    pod-23   1/1     Running   0          5m21s   env=dev,mode=exam,type=external
+    pod-32   1/1     Running   0          5m20s   env=prod,mode=standard,type=internal
+    pod-21   1/1     Running   0          5m20s   env=prod,mode=exam,type=external
+
+
+
+    Looks like there are a lot of pods created to confuse us. But we are only concerned with the labels of pod-23 and pod-21.
+
+
+
+    As we can see both the required pods have labels mode=exam,type=external in common. Let's confirm that using kubectl too:
+
+
+    student-node ~ ➜  kubectl get pod -l mode=exam,type=external                                       
+    NAME     READY   STATUS    RESTARTS   AGE
+    pod-23   1/1     Running   0          9m18s
+    pod-21   1/1     Running   0          9m17s
+
+
+
+
+    Nice!! Now as we have figured out the labels, we can proceed further with the creation of the service:
+
+
+    student-node ~ ➜  kubectl create service clusterip service-3421-svcn --tcp=8080:80 --dry-run=client -o yaml > service-3421-svcn.yaml
+
+
+
+
+    Now modify the service definition with selectors as required before applying to k8s cluster:
+
+
+    student-node ~ ➜  cat service-3421-svcn.yaml 
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: service-3421-svcn
+      name: service-3421-svcn
+    spec:
+      ports:
+      - name: 8080-80
+        port: 8080
+        protocol: TCP
+        targetPort: 80
+      selector:
+        app: service-3421-svcn  # delete 
+        mode: exam    # add
+        type: external  # add
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+
+
+
+    Finally let's apply the service definition:
+
+
+    student-node ~ ➜  kubectl apply -f service-3421-svcn.yaml
+    service/service-3421 created
+
+    student-node ~ ➜  k get ep service-3421-svcn 
+    NAME           ENDPOINTS                     AGE
+    service-3421   10.42.0.15:80,10.42.0.17:80   52s
+
+
+
+
+    To store all the pod name along with their IP's , we could use imperative command as shown below:
+
+
+    student-node ~ ➜  kubectl get pods -A -o=custom-columns='POD_NAME:metadata.name,IP_ADDR:status.podIP' --sort-by=.status.podIP
+
+    POD_NAME                                  IP_ADDR
+    helm-install-traefik-crd-lbwzr            10.42.0.2
+    local-path-provisioner-7b7dc8d6f5-d4x7t   10.42.0.3
+    metrics-server-668d979685-vh7bk           10.42.0.4
+    ...
+
+    # store the output to /root/pod_ips_ckad02_svcn
+    student-node ~ ➜  kubectl get pods -A -o=custom-columns='POD_NAME:metadata.name,IP_ADDR:status.podIP' --sort-by=.status.podIP > /root/pod_ips_ckad02_svcn
+
+
+)
+
+(
+	    SECTION: SERVICES AND NETWORKING
+
+
+    For this question, please set the context to cluster1 by running:
+
+    kubectl config use-context cluster1
+
+
+
+    Deploy a pod with name messaging-ckad04-svcn using the redis:alpine image with the label tier=msg.
+
+
+
+    Now, Create a service messaging-service-ckad04-svcn to expose the pod messaging-ckad04-svcn application within the cluster on port 6379.
+
+
+    info_outline
+    Solution
+
+    Switch to cluster1 :
+
+
+    kubectl config use-context cluster1
+
+
+
+
+    On student-node, use the command kubectl run messaging-ckad04-svcn --image=redis:alpine -l tier=msg
+
+
+
+    Now run the command: kubectl expose pod messaging-ckad04-svcn --port=6379 --name messaging-service-ckad04-svcn.
+
+)
+
+
+
+
+
+
+
+
+	
+}
+
+
+{
+
+	    SECTION: APPLICATION DEPLOYMENT
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+    Create a new deployment called ocean-apd in the default namespace using the image kodekloud/webapp-color:v1.
+    Use the following specs for the deployment:
+
+
+    1. Replica count should be 2.
+
+    2. Set the Max Unavailable to 45% and Max Surge to 55%.
+
+    3. Create the deployment and ensure all the pods are ready.
+
+    4. After successful deployment, upgrade the deployment image to kodekloud/webapp-color:v2 and inspect the deployment rollout status.
+
+    5. Check the rolling history of the deployment and on the student-node, save the current revision count number to the /opt/ocean-revision-count.txt file.
+
+    6. Finally, perform a rollback and revert the deployment image to the older version.
+
+
+
+    info_outline
+    Solution
+
+    Run the following command to change the context: -
+
+    kubectl config use-context cluster3
+
+
+    Use the following template to create a deployment called ocean-apd: -
+
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: ocean-apd
+      name: ocean-apd
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: ocean-apd
+      strategy: 
+       type: RollingUpdate
+       rollingUpdate:
+         maxUnavailable: 45%
+         maxSurge: 55%
+      template:
+        metadata:
+          labels:
+            app: ocean-apd
+        spec:
+          containers:
+          - image: kodekloud/webapp-color:v1
+            name: webapp-color
+
+
+    Now, create the deployment by using the kubectl create -f command in the default namespace: -
+
+    kubectl create -f <FILE-NAME>.yaml
+
+
+    After sometime, upgrade the deployment image to kodekloud/webapp-color:v2: -
+
+    kubectl set image deploy ocean-apd webapp-color=kodekloud/webapp-color:v2
+
+
+    And check out the rollout history of the deployment ocean-apd: -
+
+    kubectl rollout history deploy ocean-apd
+    deployment.apps/ocean-apd 
+    REVISION  CHANGE-CAUSE
+    1         <none>
+    2         <none>
+
+
+        NOTE: - Revision count is 2. In your lab, it could be different.
+
+
+    On the student-node, store the revision count to the given file: -
+
+    echo "2" > /opt/ocean-revision-count.txt
+
+
+    In final task, rollback the deployment image to an old version: -
+
+    kubectl rollout undo deployment ocean-apd
+
+
+    Verify the image name by using the following command: -
+
+    kubectl describe deploy ocean-apd | grep -i image
+
+
+    It should be kodekloud/webapp-color:v1 image.
+
+}

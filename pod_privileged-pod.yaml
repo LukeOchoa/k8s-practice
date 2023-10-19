@@ -7,8 +7,8 @@ spec:
   containers:
   - name: some-container
     image: nginx:1.17
-  securityContext:
-    privileged: true
+    securityContext:
+      privileged: true
 
 
 # Set pod to privileged

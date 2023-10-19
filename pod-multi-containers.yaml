@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: ckad-multi-containers
+  name: ckad-sidecar-pod
+spec:
+  containers:
+    - image: nginx:1.16
+      name: main-container
+      resources: {}
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: my-vol
+          mountPath: /usr/share/nginx/html
+    - image: busybox:1.28
+      command:
+        - /bin/sh
+        - -c
+        - while true; do echo $(date -u) Hi I am from Sidecar container >> /var/log/index.html; sleep 5;done
+      name: sidecar-container
+      resources: {}
+      volumeMounts:
+        - name: my-vol
+          mountPath: /var/log
+  dnsPolicy: Default
+  volumes:
+    - name: my-vol
+      emptyDir: {}

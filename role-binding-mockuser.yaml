@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mock-user-binding
+
+subjects:
+  - kind: User
+    name: mock-user
+    apiGroup: rbac.authorization.k8s.io/v1  
+
+roleRef:
+  kind: Role
+  name: pod-creater

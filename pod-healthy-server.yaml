@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: healthy-server
+spec:
+  containers:
+  # One
+  - name: main
+    image: busybox:1.28
+    command:
+      - sh 
+      - -c 
+      - echo "The app is running!" && sleep 3600
+  # Two
+  - name: init
+    image: busybox:1.28
+    command: 
+      - sh 
+      - -c 
+      - echo "Initialize application environment!" && sleep 10

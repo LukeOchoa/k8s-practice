@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-v2-apd
+  labels:
+    stage: test02
+
+spec:
+
+  replicas: 3
+
+  selector:
+    matchLabels:
+      stage: test02
+
+  template:
+    metadata:
+      labels:
+        stage: test02
+
+    spec:
+      containers:
+        - name: test-v2
+          image: kodekloud/webapp-color:v2
+ 

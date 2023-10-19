@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc-ckad02-str
+spec:
+  storageClassName: manual
+  volumeName: data-pv-ckad02-str
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi
+
+
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: data-pvc-ckad02-str
+# spec:
+#   storageClassName: manual
+#   volumeName: data-pv-ckad02-str
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 50Mi
+
+
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: data-pvc-ckad02-str
+
+# spec:
+#   storageClassName: manual
+#   volumeName: data-pv-ckad02-str
+#   accessModes:
+#     - ReadWriteOnce
+
+#   resources:
+#     requests:
+#       storage: 50Mi
+
+
+
+
+
+
+# apiVersion: v1
+# kind: PersistentVolume
+
+# metadata:
+#   name: data-pv-ckad02-str
+
+# spec: 
+#   accessModes:
+#     - ReadWriteMany
+
+#   capacity:
+#     storage: 128Mi
+
+#   hostPath:
+#     path: /opt/data-pv-ckad02-str
+
+#   claimRef:
+#     name: data-pv-ckad02-str
+
+#   storageClassName: AnyName
