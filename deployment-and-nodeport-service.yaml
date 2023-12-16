@@ -62,14 +62,16 @@ spec:
 #           command: ["sh", "-c", "sleep 5000;"]
 
 #       restartPolicy: Always
-            
 
+
+
+      
 # apiVersion: v1
 # kind: Service
 
 # metadata:
 #   name: route-apd-svc
-#   label:
+#   labels:
 #     app: route-apd-svc
 
 # spec:
@@ -81,5 +83,10 @@ spec:
 
 #   ports:
 #     - port: 80
+#       protocol: TCP
 #       targetPort: 8080
 #       nodePort: 30080
+ 
+
+            
+

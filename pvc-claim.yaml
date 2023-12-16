@@ -4,7 +4,7 @@ metadata:
   name: data-pvc-ckad02-str
 spec:
   storageClassName: manual
-  volumeName: data-pv-ckad02-str
+  volumeName: data-pvc-ckad02-str
   accessModes:
     - ReadWriteOnce
   resources:

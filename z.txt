@@ -1069,3 +1069,873 @@ As shown above, we will get the Application Version: v2 in the output.
 
   
 }
+
+
+{
+
+  (
+    SECTION: APPLICATION DEPLOYMENT
+
+
+      For this question, please set the context to cluster2 by running:
+      
+      kubectl config use-context cluster2
+      
+      
+      
+      On the cluster2-controlplane node, a Helm chart repository is given under the /opt/ path. It contains the files that describe a set of Kubernetes resources that can be deployed as a single unit. The files have some issues. Fix those issues and deploy them with the following specifications: -
+      
+      1. The release name should be webapp-color-apd.
+      
+      2. All the resources should be deployed on the frontend-apd namespace.
+      
+      3. The service type should be node port.
+      
+      4. Scale the deployment to 3.
+      
+      5. Application version should be 1.20.0.
+      
+      NOTE: - Remember to make necessary changes in the values.yaml and Chart.yaml files according to the specifications, and, to fix the issues, inspect the template files.
+      
+      You can SSH into the cluster2 using ssh cluster2-controlplane command.
+      
+          
+  )
+
+Run the following command to change the context: -
+
+kubectl config use-context cluster2
+
+
+In this task, we will use the helm commands. Here are the steps: -
+
+
+    First, check the given namespace; if it doesn't exist, we must create it first; otherwise, it will give an error "namespaces not found" while installing the helm chart.
+
+To check all the namespaces in the cluster2, we would have to run the following command: -
+
+kubectl get ns
+
+
+It will list all the namespaces. If the given namespace doesn't exist, then run the following command: -
+
+kubectl create ns frontend-apd
+
+Now, SSH to the cluster2-controlplane node and go to the /opt/ directory. We have given the helm chart directory webapp-color-apd that contains templates, values files, and the chart file etc.
+
+Update the values according to the given specifications as follows: -
+
+a.) Update the value of the appVersion to 1.20.0 in the Chart.yaml file.
+
+b.) Update the value of the replicaCount to 3 in the values.yaml file.
+
+c.) Update the value of the type to NodePort in the values.yaml file.
+
+These are the values we have to update.
+
+Now, we will use the helm lint command to check the Helm chart because it can identify errors such as missing or misconfigured values, invalid YAML syntax, and deprecated APIs etc.
+
+cd /opt/
+
+helm lint ./webapp-color-apd/
+
+
+If there is no misconfiguration, we will see the similar output: -
+
+helm lint ./webapp-color-apd/
+==> Linting ./webapp-color-apd/
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+
+
+
+But in our case, there are some issues with the given templates.
+
+    Deployment apiVersion needs to be correctly written. It should be apiVersion: apps/v1.
+
+    In the service YAML, there is a typo in the template variable {{ .Values.service.name }} because of that, it's not able to reference the value of the name field defined in the values.yaml file for the Kubernetes service that is being created or updated.
+
+  Now run the following command to install the helm chart in the frontend-apd namespace: -
+  
+  helm install webapp-color-apd -n frontend-apd ./webapp-color-apd
+  
+  
+  Use the helm ls command to list the release deployed using helm.
+  
+  helm ls -n frontend-apd
+
+
+
+
+  
+}
+
+# 9, 12, 13, 16, 17, 18, 19, 20
+
+
+{ 9
+      SECTION: APPLICATION OBSERVABILITY AND MAINTENANCE
+
+
+    For this question, please set the context to cluster1 by running:
+
+    kubectl config use-context cluster1
+
+
+
+    A pod called kodekloud-logs-aom is running in the default namespace. It has two containers; get the logs of the sidecar container and copy them to /root/ckad-exam.aom on student-node.
+
+    info_outline
+    Solution
+
+    Identify the containers name in kodekloud-logs-aom with
+
+    kubectl get pods kodekloud-logs-aom -o json | jq '.spec.containers[].name'
+    "ckad-exam"
+    "sidecar"
+
+    Use following command to logs of sidecar container
+
+    kubectl logs kodekloud-logs-aom -c sidecar > /root/ckad-exam.aom
+
+
+}
+
+{ 12
+      SECTION: APPLICATION ENVIRONMENT, CONFIGURATION and SECURITY
+
+
+    For this question, please set the context to cluster1 by running:
+
+    kubectl config use-context cluster1
+
+
+    We have a sample CRD at /root/ckad10-crd-aecs.yaml which should have the following validations:
+
+
+    destinationName, country, and city must be string types.
+
+    pricePerNight must be an integer between 50 and 5000.
+
+    durationInDays must be an integer between 1 and 30.
+
+
+
+    Update the file incorporating the above validations in a namespaced scope.
+
+    Note: Remember to create the CRD after the required changes.
+
+    info_outline
+    Solution
+
+    student-node ~ ➜  kubectl config use-context cluster1
+    Switched to context "cluster1".
+
+    student-node ~ ➜  vim ckad10-crd-aecs.yaml 
+
+    student-node ~ ➜  cat ckad10-crd-aecs.yaml 
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      name: holidaydestinations.destinations.k8s.io
+      annotations:
+        "api-approved.kubernetes.io": "unapproved, experimental-only"
+      labels:
+        app: holiday
+    spec:
+      group: destinations.k8s.io
+      names:
+        kind: HolidayDestination
+        singular: holidaydestination
+        plural: holidaydestinations
+        shortNames:
+          - hd
+      scope: Namespaced
+      versions:
+        - name: v1alpha1
+          served: true
+          storage: true
+          schema:
+            # schema used for validation
+            openAPIV3Schema:
+              type: object
+              properties:
+                spec:
+                  type: object
+                  properties:
+                    destinationName:
+                      type: string
+                    country:
+                      type: string
+                    city:
+                      type: string
+                    pricePerNight:
+                      type: integer
+                      minimum: 50
+                      maximum: 5000
+                    durationInDays:
+                      type: integer
+                      minimum: 1
+                      maximum: 30
+                status:
+                  type: object
+                  properties:
+                    availableRooms:
+                      type: integer
+                      minimum: 0
+                      maximum: 1000
+          # subresources for the custom resource
+          subresources:
+            # enables the status subresource
+            status: {}
+
+    student-node ~ ➜  k create -f ckad10-crd-aecs.yaml
+    customresourcedefinition.apiextensions.k8s.io/holidaydestinations.destinations.k8s.io created
+
+
+}
+
+{ 13
+      SECTION: APPLICATION ENVIRONMENT, CONFIGURATION and SECURITY
+
+
+    For this question, please set the context to cluster1 by running:
+
+    kubectl config use-context cluster1
+
+
+
+    Update pod ckad06-cap-aecs in the namespace ckad05-securityctx-aecs to run as root user and with the SYS_TIME and NET_ADMIN capabilities.
+
+
+    Note: Make only the necessary changes. Do not modify the name of the pod.
+
+    info_outline
+    Solution
+
+    student-node ~ ➜  kubectl config use-context cluster1
+    Switched to context "cluster1".
+
+    student-node ~ ➜  k get -n ckad05-securityctx-aecs pod ckad06-cap-aecs -o yaml | egrep -i -A3 capabilities:
+          capabilities:
+            add:
+            - SYS_TIME
+        terminationMessagePath: /dev/termination-log
+
+    student-node ~ ➜  k get -n ckad05-securityctx-aecs pod ckad06-cap-aecs -o yaml > pod-capabilities.yaml
+
+    student-node ~ ➜  vim pod-capabilities.yaml
+
+    student-node ~ ➜  cat pod-capabilities.yaml
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: ckad06-cap-aecs
+      namespace: ckad05-securityctx-aecs
+    spec:
+      containers:
+      - command:
+        - sleep
+        - "4800"
+        image: ubuntu
+        name: ubuntu-sleeper
+        securityContext:
+          capabilities:
+            add: ["SYS_TIME", "NET_ADMIN"]
+
+    student-node ~ ➜  k replace -f pod-capabilities.yaml --force 
+    pod "ckad06-cap-aecs" deleted
+    pod/ckad06-cap-aecs replaced
+
+    student-node ~ ➜  k get -n ckad05-securityctx-aecs pod ckad06-cap-aecs -o yaml | egrep -i -A3 capabilities:
+          capabilities:
+            add:
+            - SYS_TIME
+            - NET_ADMIN
+
+
+}
+
+{ 16
+      SECTION: APPLICATION ENVIRONMENT, CONFIGURATION and SECURITY
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+    Define a Kubernetes custom resource definition (CRD) for a new resource kind called Foo (plural form - foos) in the samplecontroller.k8s.io group.
+
+    This CRD should have a version of v1alpha1 with a schema that includes two properties as given below:
+
+        deploymentName (a string type) and replicas (an integer type with minimum value of 1 and maximum value of 5).
+
+
+
+    It should also include a status subresource which enables retrieving and updating the status of Foo object, including the availableReplicas property, which is an integer type.
+    The Foo resource should be namespace scoped.
+
+
+    Note: We have provided a template /root/foo-crd-aecs.yaml for your ease. There are few issues with it so please make sure to incorporate the above requirements before deploying on cluster.
+
+    info_outline
+    Solution
+
+    student-node ~ ➜  kubectl config use-context cluster3
+    Switched to context "cluster3".
+
+    student-node ~ ➜  vim foo-crd-aecs.yaml
+
+    student-node ~ ➜  cat foo-crd-aecs.yaml 
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      name: foos.samplecontroller.k8s.io
+      annotations:
+        "api-approved.kubernetes.io": "unapproved, experimental-only"
+    spec:
+      group: samplecontroller.k8s.io
+      scope: Namespaced
+      names:
+        kind: Foo
+        plural: foos
+      versions:
+        - name: v1alpha1
+          served: true
+          storage: true
+          schema:
+            # schema used for validation
+            openAPIV3Schema:
+              type: object
+              properties:
+                spec:
+                  # Spec for schema goes here !
+                  type: object
+                  properties:
+                    deploymentName:
+                      type: string
+                    replicas:
+                      type: integer
+                      minimum: 1
+                      maximum: 5
+                status:
+                  type: object
+                  properties:
+                    availableReplicas:
+                      type: integer
+          # subresources for the custom resource
+          subresources:
+            # enables the status subresource
+            status: {}
+
+    student-node ~ ➜  kubectl apply -f foo-crd-aecs.yaml
+    customresourcedefinition.apiextensions.k8s.io/foos.samplecontroller.k8s.io created
+
+
+}
+
+{ 17
+      SECTION: SERVICES AND NETWORKING
+
+
+
+    For this question, please set the context to cluster1 by running:
+
+    kubectl config use-context cluster1
+
+
+
+    Create an nginx pod called nginx-resolver-ckad03-svcn using image nginx, and expose it internally at port 80 with a service called nginx-resolver-service-ckad03-svcn.
+
+
+    info_outline
+    Solution
+
+    Switching to cluster1:
+
+
+    kubectl config use-context cluster1
+
+
+
+    To create a pod nginx-resolver-ckad03-svcn and expose it internally:
+
+
+    student-node ~ ➜ kubectl run nginx-resolver-ckad03-svcn --image=nginx 
+    student-node ~ ➜ kubectl expose pod/nginx-resolver-ckad03-svcn --name=nginx-resolver-service-ckad03-svcn --port=80 --target-port=80 --type=ClusterIP 
+
+
+}
+
+{ 18
+      SECTION: SERVICES AND NETWORKING
+
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+
+    For this scenario, create a Service called ckad14-svcn that routes traffic to an external IP address.
+
+
+    Please note that service should listen on port 80 and be of type ExternalName. Use the external IP address 10.0.0.3.
+
+
+
+    Create the service in the default namespace.
+
+    info_outline
+    Solution
+
+    Create the service using the following manifest:
+
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: ckad14-svcn
+    spec:
+      type: ExternalName
+      externalName: 10.0.0.3
+      ports:
+        - name: http
+          port: 80
+          targetPort: 80
+}
+
+{ 19
+      SECTION: SERVICES AND NETWORKING
+
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+
+    Create a Deployment named ckad15-depl-svcn with "two replicas" of nginx image and expose it using a service named ckad15-service-svcn.
+
+
+    Please be noted that service needs to be accessed from both inside and outside the cluster (use port 30085).
+
+
+
+    Create the service in the default namespace.
+
+    info_outline
+    Solution
+
+    The following manifest can be used to create an deployment ckad15-depl-svcn with nginx image and 2 replicas.
+
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ckad15-depl-svcn
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: nginx
+      template:
+        metadata:
+          labels:
+            app: nginx
+        spec:
+          containers:
+          - name: nginx
+            image: nginx
+            ports:
+            - containerPort: 80
+
+
+
+    To access from outside the cluster, we use nodeport type of service.
+
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: ckad15-service-svcn
+    spec:
+      selector:
+        app: nginx
+      type: NodePort
+      ports:
+        - name: http
+          port: 80
+          targetPort: 80
+          nodePort: 30085
+
+
+}
+
+{ 20
+      SECTION: SERVICES AND NETWORKING
+
+
+    For this question, please set the context to cluster1 by running:
+
+    kubectl config use-context cluster1
+
+
+
+    Deploy a pod with name messaging-ckad04-svcn using the redis:alpine image with the label tier=msg.
+
+
+
+    Now, Create a service messaging-service-ckad04-svcn to expose the pod messaging-ckad04-svcn application within the cluster on port 6379.
+
+
+    info_outline
+    Solution
+
+    Switch to cluster1 :
+
+
+    kubectl config use-context cluster1
+
+
+
+
+    On student-node, use the command kubectl run messaging-ckad04-svcn --image=redis:alpine -l tier=msg
+
+
+
+    Now run the command: kubectl expose pod messaging-ckad04-svcn --port=6379 --name messaging-service-ckad04-svcn.
+
+}
+
+{
+      SECTION: SERVICES AND NETWORKING
+
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+    Please use the namespace nginx-depl-svcn for the following scenario.
+
+    Create a deployment with name nginx-ckad10-svcn using nginx image with 2 replicas. Also expose the deployment via ClusterIP service .i.e. nginx-ckad10-service-svcn on port 80. Use the label app=nginx-ckad for both resources.
+
+
+    Now, create a NetworkPolicy .i.e. netpol-ckad-allow-svcn so that only pods with label criteria: allow can access the deployment and apply it.
+
+    info_outline
+    Solution
+
+    Use the following to create the deployment and the service.
+
+    kubectl apply -n nginx-depl-svcn -f - <<eof
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: nginx-ckad10-svcn
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: nginx-ckad
+      template:
+        metadata:
+          labels:
+            app: nginx-ckad
+        spec:
+          containers:
+            - name: nginx
+              image: nginx
+              ports:
+                - containerPort: 80
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: nginx-ckad10-service-svcn
+    spec:
+      selector:
+        app: nginx-ckad
+      ports:
+        - name: http
+          port: 80
+          targetPort: 80
+      type: ClusterIP
+    eof
+
+
+
+    To create a NetworkPolicy that only allows pods with labels criteria: allow to access the deployment, you can use the following YAML definition:
+
+    kubectl apply -n nginx-depl-svcn -f - <<eof
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: netpol-ckad-allow-svcn
+    spec:
+      podSelector:
+        matchLabels:
+          app: nginx-ckad
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  criteria: allow
+          ports:
+            - protocol: TCP
+              port: 80
+    eof
+
+
+}
+
+
+{
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: ckad14-svcn
+  spec:
+    type: ExternalName
+    externalName: 10.0.0.3
+    ports:
+      - name: http
+        port: 80
+        targetPort: 80
+}
+
+{
+      SECTION: SERVICES AND NETWORKING
+
+
+
+    For this question, please set the context to cluster3 by running:
+
+    kubectl config use-context cluster3
+
+
+
+    For this scenario, we have already deployed an application in the global-space. Inspect them and create an ingress resource with name ingress-resource-xnz to make the application available at /eat on the Ingress service. Use ingress class of nginx.
+
+    Also, make use of following annotation fields: -
+
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+
+    Ingress resource comes under the namespace scoped, so don't forget to create the ingress in the global-space namespace.
+
+    Make sure the paths select the correct backend services.
+
+    info_outline
+    Solution
+
+    Switch to cluster3 by using the following command:
+
+    kubectl config use-context cluster3
+
+    To view the applications running on global-space namespace, run the following.
+
+    cluster3-controlplane ~ ➜  kubectl get pod,svc -n global-space
+    NAME                                 READY   STATUS    RESTARTS   AGE
+    pod/default-backend-b46b9989-p9h28   1/1     Running   0          95s
+    pod/webapp-food-dcd846f95-khhmw      1/1     Running   0          95s
+
+    NAME                              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+    service/default-backend-service   ClusterIP   10.102.22.145   <none>        80/TCP     95s
+    service/food-service              ClusterIP   10.99.255.77    <none>        8080/TCP   95s
+
+    We have service food-service configured, this will act as backend service for /eat path respectively.
+
+    Using Command Line
+
+    Create an ingress resource using the following imperative command:
+
+    kubectl create ingress ingress-resource-xnz \
+      --namespace global-space \
+      --rule='/eat'='food-service:8080' \
+      --annotation='nginx.ingress.kubernetes.io/rewrite-target=/' \
+      --annotation='nginx.ingress.kubernetes.io/ssl-redirect=false' \
+      --class=nginx
+
+    Using manifest file
+
+    Solution manifest file to create a ingress resource as follows:
+
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: ingress-resource-xnz
+      namespace: global-space
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    spec:
+      ingressClassName: nginx
+      rules:
+      - http:
+          paths:
+          - path: /eat
+            pathType: Prefix
+            backend:
+              service:
+               name: food-service
+               port:
+                number: 8080
+
+
+}
+
+
+{
+  cat << 'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ckad08-top-secret-pod-aecs
+  namespace: ckad08-tp-srt-aecs
+spec:
+  restartPolicy: Never
+  volumes:
+  - name: secret-volume
+    secret:
+      secretName: ckad08-dotfile-secret-aecs
+  containers:
+  - name: ckad08-top-scrt-ctr-aecs
+    image: registry.k8s.io/busybox
+    command:
+    - ls
+    - "-al"
+    - "/etc/secret-volume"
+    volumeMounts:
+    - name: secret-volume
+      readOnly: true
+      mountPath: "/etc/secret-volume"
+}
+
+{
+  kubectl api-resources --sort-by=kind | grep -i storage.k8s.io/v1  > /root/api-version.txt
+}
+
+{
+
+    kubectl create secret generic db-user-pass \
+    --from-literal=username=admin \
+    --from-literal=password='S!B\*d$zDsb='
+
+    student-node ~ ➜  kubectl config use-context cluster2
+  Switched to context "cluster2".
+  
+  student-node ~ ➜  k get cm -n ckad21-auth2-aecs 
+  NAME               DATA   AGE
+  kube-root-ca.crt   1      3m35s
+  ckad-cnfmp-aecs    2      3m35s
+  
+  student-node ~ ➜  kubectl create role configmap-updater --namespace=ckad21-auth2-aecs --resource=configmaps --resource-name=ckad-cnfmp-aecs --verb=update,get 
+  role.rbac.authorization.k8s.io/configmap-updater created
+  
+  student-node ~ ➜  k get role -n ckad21-auth2-aecs configmap-updater -o yaml
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    creationTimestamp: "2023-03-22T09:01:04Z"
+    name: configmap-updater
+    namespace: ckad21-auth2-aecs
+    resourceVersion: "2799"
+    uid: c152750a-198e-438e-9993-64b3e872c3e0
+  rules:
+  - apiGroups:
+    - ""
+    resourceNames:
+    - ckad-cnfmp-aecs
+    resources:
+    - configmaps
+    verbs:
+    - update
+    - get
+  }
+  
+  {
+    kubectl api-resources --sort-by=kind | grep -i storage.k8s.io/v1  > /root/api-version.txt
+  }
+  
+  {
+    Identify the containers name in kodekloud-logs-aom with
+  
+  kubectl get pods kodekloud-logs-aom -o json | jq '.spec.containers[].name'
+  "ckad-exam"
+  "sidecar"
+  
+  Use following command to logs of sidecar container
+  
+  kubectl logs kodekloud-logs-aom -c sidecar > /root/ckad-exam.aom
+}
+  
+  
+  
+{
+    Use the following command to get details:
+  
+  kubectl top nodes > /root/node-metrics
+}
+
+
+
+10
+
+{
+
+    student-node ~ ➜  kubectl config use-context cluster1
+    Switched to context "cluster1".
+    
+    student-node ~ ➜  k get all -n ckad01-appstk-sec-aecs
+    NAME                         READY   STATUS    RESTARTS   AGE
+    pod/ckad01-webapp-pod-aecs   1/1     Running   0          3m13s
+    pod/ckad01-db-pod-aecs       1/1     Running   0          3m13s
+    
+    NAME                                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+    service/ckad01-webapp-service-aecs   NodePort    10.43.190.89    <none>        8080:30080/TCP   3m13s
+    service/ckad01-db-svc-aecs           ClusterIP   10.43.117.255   <none>        3306/TCP         3m13s
+    
+    student-node ~ ➜  kubectl create secret generic ckad01-db-scrt-aecs \
+       --namespace=ckad01-appstk-sec-aecs \
+       --from-literal=DB_Host=sql01 \
+       --from-literal=DB_User=root \
+       --from-literal=DB_Password=password123
+    secret/ckad01-db-scrt-aecs created
+    
+    student-node ~ ➜  k get -n ckad01-appstk-sec-aecs pod ckad01-webapp-pod-aecs -o yaml > webapp-pod-sec-cfg.yaml
+    
+    student-node ~ ➜  vim webapp-pod-sec-cfg.yaml
+    
+    student-node ~ ➜  cat webapp-pod-sec-cfg.yaml 
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        name: ckad01-webapp-pod-aecs
+      name: ckad01-webapp-pod-aecs
+      namespace: ckad01-appstk-sec-aecs
+    spec:
+      containers:
+      - image: kodekloud/simple-webapp-mysql
+        imagePullPolicy: Always
+        name: webapp
+        envFrom:
+        - secretRef:
+            name: ckad01-db-scrt-aecs
+    
+    student-node ~ ➜  kubectl replace -f webapp-pod-sec-cfg.yaml --force 
+    pod "ckad01-webapp-pod-aecs" deleted
+    pod/ckad01-webapp-pod-aecs replaced
+    
+    student-node ~ ➜  kubectl exec -n ckad01-appstk-sec-aecs ckad01-webapp-pod-aecs -- printenv | egrep -w 'DB_Password=password123|DB_User=root|DB_Host=sql01'
+    DB_Password=password123
+    DB_User=root
+    DB_Host=sql01
+
+}

@@ -7,15 +7,21 @@ metadata:
 
 spec:
   schedule: "*/30 * * * *"
+
   jobTemplate:
     spec:
+
       template:
         spec:
+
+          restartPolicy: OnFailure
+
           containers:
+
           - name: simple-python-job
             image: python
             command:
             - /bin/sh
             - -c
             - ps -eaf
-          restartPolicy: OnFailure
+
